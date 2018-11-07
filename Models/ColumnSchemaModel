@@ -1,0 +1,30 @@
+using AUO.SmartCaring.Model.Mapper;
+
+namespace AUO.SmartCaring.Model.Models
+{
+    /// <summary>
+    /// 
+    /// </summary>
+    public class ColumnSchemaModel
+    {
+        [Column(Name = "TABLE_NAME")]
+        public string TableName { get; set; }
+        [Column(Name = "COLUMN_NAME")]
+        public string ColumnName { get; set; }
+        [Column(Name = "DATA_TYPE")]
+        public string DataType { get; set; }
+        public bool IsNull
+        {
+            get
+            {
+                return IsNullable == "YES" ? true : false;
+            }
+        }
+        [Column(Name = "IS_NULLABLE")]
+        public string IsNullable { get; set; }
+        [Column(Name = "COLUMN_COMMENT")]
+        public string ColumnComment { get; set; }
+        
+
+    }
+}
