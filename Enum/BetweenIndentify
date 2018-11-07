@@ -1,0 +1,8 @@
+namespace AUO.SmartCaring.Model.Enum
+{
+    public enum BetweenIndentify
+    {
+        Start = 0,
+        End = 1
+    }
+}
