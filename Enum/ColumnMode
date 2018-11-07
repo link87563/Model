@@ -1,0 +1,9 @@
+namespace AUO.SmartCaring.Model.Enum
+{
+    public enum ColumnMode
+    {
+        Key = 0,
+        NonKey = 1,
+        All = 2
+    }
+}
