@@ -1,0 +1,27 @@
+using System;
+using AUO.SmartCaring.Model.Mapper;
+
+namespace AUO.SmartCaring.Model.Models
+{
+    public class TableSchemaModel
+    {
+        [Column(Name = "TABLE_SCHEMA")]
+        public string TableSchema { get; set; }
+        [Column(Name = "TABLE_NAME")]
+        public string TableName { get; set; }
+        [Column(Name = "TABLE_TYPE")]
+        public string TableType { get; set; }
+        [Column(Name = "ENGINE")]
+        public string Engine { get; set; }
+        [Column(Name = "CREATE_TIME")]
+        public DateTime CreateTime { get; set; }
+        [Column(Name = "UPDATE_TIME")]
+        public DateTime UpdateTime { get; set; }
+        [Column(Name = "TABLE_COMMENT")]
+        public string TableComment { get; set; }
+        
+        
+        
+
+    }
+}
