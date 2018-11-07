@@ -1,0 +1,15 @@
+namespace AUO.SmartCaring.Model.Enum
+{
+    public enum WhereClause
+    {
+        EqualTo = 0,
+        Like = 1,
+        LikeStartWith = 2,
+        LikeEndWith = 3,
+        Between = 4,
+        GreaterThan = 5,
+        LessThan = 6,
+        GreaterThanOrEqualTo = 7,
+        LessThanOrEqualTo = 8
+    }
+}
