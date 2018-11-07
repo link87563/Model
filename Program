@@ -1,0 +1,116 @@
+using System;
+using System.IO;
+using System.Reflection;
+using System.Text;
+using AUO.SmartCaring.Model.Mapper;
+using AUO.SmartCaring.Model.Models;
+using Dapper;
+using MySql.Data.MySqlClient;
+using AUO.SmartCaring.Model.Core;
+using System.Collections.Generic;
+using System.Linq;
+
+namespace AUO.SmartCaring.Model
+{
+    class Program
+    {
+        static void Main(string[] args)
+        {
+            var sourcePath = Directory.GetCurrentDirectory();
+            var outputPath = Path.Combine(sourcePath, "Outputs");
+            // Initial Dapper Mapper
+            Dapper.SqlMapper.SetTypeMap(typeof(TableSchemaModel), new ColumnAttributeTypeMapper<TableSchemaModel>());
+            Dapper.SqlMapper.SetTypeMap(typeof(ColumnSchemaModel), new ColumnAttributeTypeMapper<ColumnSchemaModel>());
+
+            // AND TABLE_NAME = 'resident'
+            using (var conn = new MySqlConnection(Share.GetConnectionString()))
+            {
+                // Get Table List
+                var sqlBuilder = new StringBuilder();
+                sqlBuilder.Append($"SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_TYPE='BASE TABLE'AND TABLE_SCHEMA = '{conn.Database}'");
+                var tableList = conn.Query<TableSchemaModel>(sqlBuilder.ToString());
+                foreach (var item in tableList)
+                {
+                    // Get columns with specific table name
+                    var classModelPath = Path.Combine(outputPath, $"{item.TableName.GetClassOrPropertyName()}.cs");
+                    var classLineList = new List<string>();
+                    if (!Directory.Exists(outputPath))
+                    {
+                        Directory.CreateDirectory(outputPath);
+                    }
+
+                    classLineList.Add("using AUO.SmartCaring.Model.Mapper;");
+                    classLineList.Add("using System;");
+                    classLineList.Add("");
+                    classLineList.Add("namespace AUO.SmartCaring.Model.Models");
+                    classLineList.Add("{");
+                    classLineList.Add($"[Table(Name = \"{item.TableName}\")]".GetStringWithWhiteSpace(4));
+                    classLineList.Add("/// <summary>".GetStringWithWhiteSpace(4));
+                    classLineList.Add($"/// {item.TableComment}".GetStringWithWhiteSpace(4));
+                    classLineList.Add("/// <summary>".GetStringWithWhiteSpace(4));
+                    classLineList.Add($"public class {item.TableName.GetClassOrPropertyName()}".GetStringWithWhiteSpace(4));
+                    classLineList.Add("{".GetStringWithWhiteSpace(4));
+
+                    var columnSelectSql = $"SELECT * FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = '{item.TableName}' AND TABLE_SCHEMA = '{conn.Database}' ";
+                    var columnList = conn.Query<ColumnSchemaModel>(columnSelectSql).ToList().Distinct();
+                    foreach (var columnItem in columnList)
+                    {
+                        if (columnItem.ColumnName == "created_date"
+                            || columnItem.ColumnName == "created_by"
+                            || columnItem.ColumnName == "updated_date"
+                            || columnItem.ColumnName == "updated_by"
+                            || columnItem.ColumnName == "deleted_date"
+                            || columnItem.ColumnName == "deleted_by"
+                            || columnItem.ColumnName == "is_delete")
+                        {
+                            continue;
+                        }
+                        var dataType = "";
+                        switch (columnItem.DataType.ToLower())
+                        {
+                            case "char":
+                            case "varchar":
+                            case "text":
+                                dataType = "string";
+                                break;
+                            case "date":
+                            case "datetime":
+                            case "timestamp":
+                                dataType = "Nullable<DateTime>";
+                                break;
+                            case "tinyint":
+                                dataType = "Nullable<bool>";
+                                break;
+                            default:
+                                dataType = "Nullable<int>";
+                                break;
+                        }
+                        classLineList.Add("/// <summary>".GetStringWithWhiteSpace(8));
+                        classLineList.Add($"/// {columnItem.ColumnComment}".GetStringWithWhiteSpace(8));
+                        classLineList.Add("/// <summary>".GetStringWithWhiteSpace(8));
+                        classLineList.Add($"[Column(Name = \"{columnItem.ColumnName}\")]".GetStringWithWhiteSpace(8));
+                        classLineList.Add(($"public {dataType} {columnItem.ColumnName.GetClassOrPropertyName()}" + " { get; set; }").GetStringWithWhiteSpace(8));
+                    }
+
+                    classLineList.Add("}".GetStringWithWhiteSpace(4));
+                    classLineList.Add("}");
+
+                    // Write Class File
+                    if (!File.Exists(classModelPath))
+                    {
+                        using (var sw = File.CreateText(classModelPath))
+                        {
+                            foreach (var classLine in classLineList)
+                            {
+                                sw.WriteLine(classLine);
+                            }
+                            System.Console.WriteLine($"End Create Class File: {item.TableName}");
+                        }
+                    }
+                }
+            }
+            Console.ReadLine();
+        }
+
+    }
+}
